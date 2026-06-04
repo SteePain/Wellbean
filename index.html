@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="Well Bean" />
+<meta name="theme-color" content="#f5efe6" />
+<title>Well Bean</title>
+
+<!-- PWA icons (inline SVG favicon + apple touch icon via canvas) -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23e8d5b7'/><text y='.9em' font-size='72' x='12'>🫘</text></svg>" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Nunito:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+<!-- Recharts via CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/recharts/2.8.0/Recharts.js"></script>
+
+<style>
+  :root {
+    --cream: #f5efe6;
+    --warm: #ede3d4;
+    --sand: #d9c9b0;
+    --bean: #8b5e3c;
+    --bean-light: #c4895f;
+    --bean-pale: #f0dfd0;
+    --sage: #7a9e7e;
+    --sage-light: #b8d4bb;
+    --sage-pale: #e8f2e9;
+    --rose: #d4847a;
+    --rose-pale: #f5e6e4;
+    --text: #3d2c1e;
+    --text-mid: #7a6555;
+    --text-soft: #b0a090;
+    --white: #fdfaf6;
+    --radius: 20px;
+    --radius-sm: 12px;
+    --shadow: 0 4px 24px rgba(139,94,60,0.10);
+    --shadow-sm: 0 2px 10px rgba(139,94,60,0.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    background: var(--cream);
+    color: var(--text);
+    font-family: 'Nunito', sans-serif;
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    overscroll-behavior: none;
+  }
+
+  #root { min-height: 100vh; }
+
+  .app {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    display: flex;
+    flex-direction: column;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  /* Header */
+  .header {
+    background: var(--white);
+    padding: 16px 20px 12px;
+    padding-top: calc(16px + env(safe-area-inset-top));
+    border-bottom: 1.5px solid var(--warm);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 26px;
+    font-weight: 900;
+    color: var(--bean);
+    letter-spacing: -0.02em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .logo-bean { font-size: 22px; }
+
+  .header-stats {
+    text-align: right;
+  }
+
+  .header-lost {
+    font-family: 'Playfair Display', serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--sage);
+  }
+
+  .header-sub {
+    font-size: 11px;
+    color: var(--text-soft);
+    font-weight: 500;
+  }
+
+  /* Nav */
+  .nav {
+    background: var(--white);
+    display: flex;
+    border-bottom: 1.5px solid var(--warm);
+    overflow-x: auto;
+    scrollbar-width: none;
+    position: sticky;
+    top: calc(62px + env(safe-area-inset-top));
+    z-index: 99;
+  }
+
+  .nav::-webkit-scrollbar { display: none; }
+
+  .nav-btn {
+    flex: 1;
+    min-width: 70px;
+    padding: 12px 8px 10px;
+    border: none;
+    background: none;
+    font-family: 'Nunito', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-soft);
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    border-bottom: 3px solid transparent;
+    transition: all 0.2s;
+  }
+
+  .nav-btn.active {
+    color: var(--bean);
+    border-bottom-color: var(--bean);
+  }
+
+  /* Main */
+  .main {
+    flex: 1;
+    padding: 20px 16px;
+    overflow-y: auto;
+  }
+
+  /* Cards */
+  .card {
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: var(--shadow-sm);
+    margin-bottom: 14px;
+  }
+
+  .card-title {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-soft);
+    margin-bottom: 16px;
+  }
+
+  /* Stats row */
+  .stats-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .stat-pill {
+    background: var(--white);
+    border-radius: var(--radius-sm);
+    padding: 14px 16px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .stat-pill-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-soft);
+    margin-bottom: 4px;
+  }
+
+  .stat-pill-value {
+    font-family: 'Playfair Display', serif;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .stat-pill-value.green { color: var(--sage); }
+  .stat-pill-sub { font-size: 11px; color: var(--text-soft); margin-top: 2px; }
+
+  /* Form */
+  .field { margin-bottom: 14px; }
+
+  .field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-mid);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .inp {
+    width: 100%;
+    background: var(--cream);
+    border: 1.5px solid var(--warm);
+    border-radius: var(--radius-sm);
+    padding: 13px 16px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 15px;
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+    -webkit-appearance: none;
+  }
+
+  .inp:focus { border-color: var(--bean-light); background: var(--white); }
+  .inp::placeholder { color: var(--text-soft); }
+
+  .upload-zone {
+    width: 100%;
+    background: var(--cream);
+    border: 2px dashed var(--sand);
+    border-radius: var(--radius-sm);
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    color: var(--text-soft);
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .upload-zone:hover { border-color: var(--bean-light); background: var(--bean-pale); }
+
+  .upload-zone img {
+    max-height: 160px;
+    max-width: 100%;
+    border-radius: 10px;
+    display: block;
+    margin: 0 auto;
+  }
+
+  .btn-primary {
+    width: 100%;
+    background: var(--bean);
+    color: var(--white);
+    border: none;
+    border-radius: 50px;
+    padding: 15px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    transition: opacity 0.2s, transform 0.1s;
+    margin-top: 6px;
+  }
+
+  .btn-primary:active { transform: scale(0.98); opacity: 0.9; }
+  .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .btn-ghost {
+    background: none;
+    border: 1.5px solid var(--sand);
+    border-radius: 50px;
+    padding: 8px 18px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-mid);
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-ghost:hover { border-color: var(--bean-light); color: var(--bean); }
+
+  /* Entry rows */
+  .entry-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--warm);
+  }
+
+  .entry-row:last-child { border-bottom: none; }
+
+  .entry-thumb {
+    width: 46px;
+    height: 46px;
+    border-radius: 10px;
+    object-fit: cover;
+    cursor: pointer;
+    border: 2px solid var(--warm);
+    flex-shrink: 0;
+  }
+
+  .entry-thumb-empty {
+    width: 46px;
+    height: 46px;
+    border-radius: 10px;
+    background: var(--cream);
+    border: 2px dashed var(--sand);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+
+  .entry-info { flex: 1; min-width: 0; }
+  .entry-date { font-size: 13px; font-weight: 600; color: var(--text); }
+  .entry-note { font-size: 11px; color: var(--text-soft); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .entry-weight { text-align: right; flex-shrink: 0; }
+  .entry-lbs { font-family: 'Playfair Display', serif; font-size: 18px; font-weight: 700; color: var(--text); }
+  .entry-delta { font-size: 11px; font-weight: 700; margin-top: 2px; }
+  .delta-down { color: var(--sage); }
+  .delta-up { color: var(--rose); }
+  .delta-flat { color: var(--text-soft); }
+
+  .del-btn {
+    background: none;
+    border: none;
+    color: var(--sand);
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px;
+    line-height: 1;
+    transition: color 0.2s;
+    flex-shrink: 0;
+  }
+
+  .del-btn:hover { color: var(--rose); }
+
+  /* Photo grid */
+  .photo-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .photo-tile {
+    position: relative;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    aspect-ratio: 3/4;
+    cursor: pointer;
+    background: var(--warm);
+  }
+
+  .photo-tile img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.25s;
+  }
+
+  .photo-tile:active img { transform: scale(0.97); }
+
+  .photo-tile-label {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(transparent, rgba(61,44,30,0.85));
+    padding: 18px 8px 8px;
+    color: #fff;
+  }
+
+  .photo-tile-weight {
+    font-family: 'Playfair Display', serif;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  .photo-tile-date { font-size: 10px; opacity: 0.8; margin-top: 1px; }
+
+  /* Comparison */
+  .compare-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .compare-img {
+    width: 100%;
+    border-radius: var(--radius-sm);
+    object-fit: cover;
+    max-height: 260px;
+  }
+
+  .compare-badge {
+    display: inline-block;
+    background: var(--bean-pale);
+    color: var(--bean);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border-radius: 50px;
+    margin-bottom: 8px;
+  }
+
+  /* Report rows */
+  .report-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 11px 0;
+    border-bottom: 1px solid var(--warm);
+    font-size: 14px;
+  }
+
+  .report-row:last-child { border-bottom: none; }
+  .report-row-label { color: var(--text-mid); font-weight: 600; }
+  .report-row-value { font-weight: 700; color: var(--text); font-family: 'Playfair Display', serif; font-size: 16px; }
+  .report-row-value.green { color: var(--sage); }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(61,44,30,0.7);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    display: flex;
+    align-items: flex-end;
+    z-index: 999;
+    animation: fadeIn 0.2s ease;
+  }
+
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+  .modal-sheet {
+    width: 100%;
+    background: var(--white);
+    border-radius: 24px 24px 0 0;
+    padding: 20px 20px calc(20px + env(safe-area-inset-bottom));
+    animation: slideUp 0.25s ease;
+    max-height: 92vh;
+    overflow-y: auto;
+  }
+
+  .modal-handle {
+    width: 40px;
+    height: 4px;
+    background: var(--sand);
+    border-radius: 2px;
+    margin: 0 auto 20px;
+  }
+
+  .modal-img {
+    width: 100%;
+    border-radius: var(--radius-sm);
+    max-height: 60vh;
+    object-fit: contain;
+    background: var(--cream);
+  }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: calc(24px + env(safe-area-inset-bottom));
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--text);
+    color: var(--cream);
+    padding: 11px 22px;
+    border-radius: 50px;
+    font-size: 13px;
+    font-weight: 600;
+    z-index: 1001;
+    white-space: nowrap;
+    animation: fadeIn 0.2s ease;
+  }
+
+  .toast.error { background: var(--rose); color: white; }
+  .toast.success { background: var(--sage); color: white; }
+
+  /* Empty state */
+  .empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-soft);
+  }
+
+  .empty-icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-title { font-family: 'Playfair Display', serif; font-size: 20px; color: var(--text-mid); margin-bottom: 8px; }
+  .empty-sub { font-size: 13px; line-height: 1.6; }
+
+  /* Export */
+  .export-row { display: flex; gap: 10px; }
+  .export-row .btn-ghost { flex: 1; }
+
+  /* Progress bar */
+  .prog-bar-bg {
+    background: var(--warm);
+    border-radius: 50px;
+    height: 8px;
+    overflow: hidden;
+    margin-top: 8px;
+  }
+
+  .prog-bar-fill {
+    height: 100%;
+    border-radius: 50px;
+    background: linear-gradient(90deg, var(--sage-light), var(--sage));
+    transition: width 0.6s ease;
+  }
+
+  /* Chart container */
+  .chart-wrap {
+    width: 100%;
+    height: 220px;
+  }
+
+  .recharts-tooltip-wrapper { outline: none !important; }
+
+  /* Big number */
+  .big-lost {
+    font-family: 'Playfair Display', serif;
+    font-size: 48px;
+    font-weight: 900;
+    color: var(--sage);
+    text-align: center;
+    line-height: 1;
+  }
+
+  .big-lost-label {
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-soft);
+    margin-top: 6px;
+  }
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script>
+const { useState, useEffect, useRef, useCallback } = React;
+const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } = Recharts;
+
+const STORAGE_KEY = "wellbean-v1";
+
+const toBase64 = (file) => new Promise((res, rej) => {
+  const r = new FileReader();
+  r.onload = () => res(r.result);
+  r.onerror = () => rej(new Error("fail"));
+  r.readAsDataURL(file);
+});
+
+const fmtDate = (iso) => {
+  const d = new Date(iso + "T00:00:00");
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+};
+
+const fmtFull = (iso) => {
+  const d = new Date(iso + "T00:00:00");
+  return d.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+};
+
+const today = () => new Date().toISOString().slice(0, 10);
+
+const movingAvg = (data, w = 7) => data.map((e, i) => {
+  const s = data.slice(Math.max(0, i - w + 1), i + 1);
+  return { ...e, avg: parseFloat((s.reduce((a, x) => a + x.weight, 0) / s.length).toFixed(1)) };
+});
+
+function CustomTooltip({ active, payload }) {
+  if (!active || !payload || !payload.length) return null;
+  return React.createElement("div", {
+    style: { background: "var(--white)", border: "1.5px solid var(--warm)", borderRadius: 10, padding: "8px 14px", fontSize: 12, boxShadow: "var(--shadow-sm)" }
+  }, payload.map(p =>
+    React.createElement("div", { key: p.dataKey, style: { color: p.dataKey === "avg" ? "var(--sage)" : "var(--text-mid)", fontWeight: 700, fontFamily: p.dataKey === "avg" ? "Playfair Display, serif" : "Nunito, sans-serif" } },
+      p.dataKey === "avg" ? `avg ${p.value}` : `${p.value} lbs`
+    )
+  ));
+}
+
+function App() {
+  const [entries, setEntries] = useState([]);
+  const [view, setView] = useState("log");
+  const [form, setForm] = useState({ date: today(), weight: "", note: "" });
+  const [photo, setPhoto] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [toast, setToast] = useState(null);
+  const [modal, setModal] = useState(null);
+  const [loaded, setLoaded] = useState(false);
+  const [goal, setGoal] = useState(null);
+  const fileRef = useRef();
+
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        setEntries(parsed.entries || []);
+        setGoal(parsed.goal || null);
+      }
+    } catch (_) {}
+    setLoaded(true);
+  }, []);
+
+  const persist = useCallback((updatedEntries, updatedGoal) => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        entries: updatedEntries,
+        goal: updatedGoal !== undefined ? updatedGoal : goal
+      }));
+    } catch (e) {
+      showToast("Storage full — try removing old photos.", true);
+    }
+  }, [goal]);
+
+  const showToast = (msg, error = false, success = false) => {
+    setToast({ msg, error, success });
+    setTimeout(() => setToast(null), 2800);
+  };
+
+  const handlePhoto = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 4.5 * 1024 * 1024) { showToast("Photo must be under 4MB.", true); return; }
+    const b64 = await toBase64(file);
+    setPhoto(b64); setPhotoPreview(b64);
+  };
+
+  const handleSave = async () => {
+    if (!form.weight || isNaN(parseFloat(form.weight))) { showToast("Enter a valid weight.", true); return; }
+    setSaving(true);
+    const idx = entries.findIndex(e => e.date === form.date);
+    const entry = {
+      date: form.date,
+      weight: parseFloat(parseFloat(form.weight).toFixed(1)),
+      note: form.note.trim(),
+      photo: photo || (idx >= 0 ? entries[idx].photo : null),
+      ts: Date.now()
+    };
+    let updated;
+    if (idx >= 0) { updated = [...entries]; updated[idx] = entry; }
+    else updated = [...entries, entry].sort((a, b) => a.date.localeCompare(b.date));
+    persist(updated);
+    setEntries(updated);
+    setForm({ date: today(), weight: "", note: "" });
+    setPhoto(null); setPhotoPreview(null);
+    if (fileRef.current) fileRef.current.value = "";
+    setSaving(false);
+    showToast(idx >= 0 ? "Entry updated ✓" : "Logged! Keep going 🌱", false, true);
+  };
+
+  const handleDelete = (date) => {
+    if (!window.confirm("Delete this entry?")) return;
+    const updated = entries.filter(e => e.date !== date);
+    persist(updated);
+    setEntries(updated);
+    showToast("Entry removed.");
+  };
+
+  const exportData = () => {
+    const blob = new Blob([JSON.stringify({ entries, goal }, null, 2)], { type: "application/json" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "wellbean-backup.json";
+    a.click();
+  };
+
+  const importData = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const r = new FileReader();
+    r.onload = (ev) => {
+      try {
+        const d = JSON.parse(ev.target.result);
+        if (d.entries) {
+          persist(d.entries, d.goal);
+          setEntries(d.entries);
+          setGoal(d.goal || null);
+          showToast("Data imported!", false, true);
+        }
+      } catch (_) { showToast("Invalid file.", true); }
+    };
+    r.readAsText(file);
+  };
+
+  const importRef = useRef();
+
+  const sorted = [...entries].sort((a, b) => a.date.localeCompare(b.date));
+  const chartData = movingAvg(sorted);
+  const first = sorted[0];
+  const last = sorted[sorted.length - 1];
+  const totalLost = first && last ? parseFloat((first.weight - last.weight).toFixed(1)) : null;
+  const photoEntries = sorted.filter(e => e.photo);
+  const days = first && last ? Math.round((new Date(last.date) - new Date(first.date)) / 86400000) + 1 : 0;
+  const lbsPerWeek = totalLost && days > 1 ? parseFloat(((totalLost / days) * 7).toFixed(1)) : null;
+  const goalPct = goal && first && last ? Math.min(100, Math.round((totalLost / (first.weight - goal)) * 100)) : null;
+
+  if (!loaded) return React.createElement("div", { style: { display: "flex", alignItems: "center", justifyContent: "center", height: "100vh", color: "var(--text-soft)", fontSize: 14 } }, "🫘");
+
+  const views = ["log", "chart", "photos", "report"];
+  const viewLabels = { log: "Today", chart: "Trend", photos: "Photos", report: "Report" };
+
+  return React.createElement("div", { className: "app" },
+
+    // Header
+    React.createElement("div", { className: "header" },
+      React.createElement("div", { className: "logo" },
+        React.createElement("span", { className: "logo-bean" }, "🫘"),
+        "Well Bean"
+      ),
+      totalLost !== null && React.createElement("div", { className: "header-stats" },
+        React.createElement("div", { className: "header-lost" }, totalLost > 0 ? `−${totalLost} lbs` : `+${Math.abs(totalLost)} lbs`),
+        React.createElement("div", { className: "header-sub" }, `${sorted.length} days logged`)
+      )
+    ),
+
+    // Nav
+    React.createElement("div", { className: "nav" },
+      views.map(v =>
+        React.createElement("button", {
+          key: v,
+          className: `nav-btn${view === v ? " active" : ""}`,
+          onClick: () => setView(v)
+        }, viewLabels[v])
+      )
+    ),
+
+    // Main
+    React.createElement("div", { className: "main" },
+
+      // Stats if we have data
+      sorted.length > 0 && view !== "report" && React.createElement("div", { className: "stats-row" },
+        React.createElement("div", { className: "stat-pill" },
+          React.createElement("div", { className: "stat-pill-label" }, "Current"),
+          React.createElement("div", { className: "stat-pill-value" }, `${last.weight}`),
+          React.createElement("div", { className: "stat-pill-sub" }, "lbs · " + fmtDate(last.date))
+        ),
+        React.createElement("div", { className: "stat-pill" },
+          React.createElement("div", { className: "stat-pill-label" }, "Lost"),
+          React.createElement("div", { className: `stat-pill-value${totalLost > 0 ? " green" : ""}` }, totalLost > 0 ? `−${totalLost}` : totalLost < 0 ? `+${Math.abs(totalLost)}` : "—"),
+          React.createElement("div", { className: "stat-pill-sub" }, "lbs total")
+        )
+      ),
+
+      // Goal progress bar
+      goal && goalPct !== null && view !== "report" && React.createElement("div", { className: "card", style: { marginBottom: 14 } },
+        React.createElement("div", { style: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 } },
+          React.createElement("span", { style: { fontSize: 12, fontWeight: 700, color: "var(--text-mid)" } }, "Goal Progress"),
+          React.createElement("span", { style: { fontSize: 12, fontWeight: 700, color: "var(--sage)" } }, `${goalPct}%`)
+        ),
+        React.createElement("div", { className: "prog-bar-bg" },
+          React.createElement("div", { className: "prog-bar-fill", style: { width: `${goalPct}%` } })
+        ),
+        React.createElement("div", { style: { fontSize: 11, color: "var(--text-soft)", marginTop: 6 } },
+          `Goal: ${goal} lbs · ${first.weight > goal ? (first.weight - goal).toFixed(1) + " lbs to lose" : "Goal reached! 🎉"}`
+        )
+      ),
+
+      // LOG VIEW
+      view === "log" && React.createElement("div", null,
+        React.createElement("div", { className: "card" },
+          React.createElement("div", { className: "card-title" }, "Log a Weigh-In"),
+          React.createElement("div", { className: "field" },
+            React.createElement("label", null, "Date"),
+            React.createElement("input", { type: "date", className: "inp", value: form.date, onChange: e => setForm(f => ({ ...f, date: e.target.value })) })
+          ),
+          React.createElement("div", { className: "field" },
+            React.createElement("label", null, "Weight (lbs)"),
+            React.createElement("input", { type: "number", className: "inp", placeholder: "185.4", step: "0.1", inputMode: "decimal", value: form.weight, onChange: e => setForm(f => ({ ...f, weight: e.target.value })) })
+          ),
+          React.createElement("div", { className: "field" },
+            React.createElement("label", null, "Note (optional)"),
+            React.createElement("input", { type: "text", className: "inp", placeholder: "Feeling great today...", value: form.note, onChange: e => setForm(f => ({ ...f, note: e.target.value })) })
+          ),
+          React.createElement("div", { className: "field" },
+            React.createElement("label", null, "Progress Photo (optional)"),
+            React.createElement("div", { className: "upload-zone", onClick: () => fileRef.current?.click() },
+              photoPreview
+                ? React.createElement("img", { src: photoPreview, alt: "preview" })
+                : React.createElement("div", null, "📷  Tap to add photo")
+            ),
+            React.createElement("input", { ref: fileRef, type: "file", accept: "image/*", capture: "user", style: { display: "none" }, onChange: handlePhoto }),
+            photoPreview && React.createElement("button", {
+              onClick: () => { setPhoto(null); setPhotoPreview(null); if (fileRef.current) fileRef.current.value = ""; },
+              style: { background: "none", border: "none", color: "var(--text-soft)", fontSize: 12, marginTop: 6, cursor: "pointer", padding: 0 }
+            }, "Remove photo")
+          ),
+          React.createElement("button", { className: "btn-primary", onClick: handleSave, disabled: saving },
+            saving ? "Saving..." : "Save Entry 🌱"
+          )
+        ),
+
+        // Goal setter
+        React.createElement("div", { className: "card" },
+          React.createElement("div", { className: "card-title" }, "Goal Weight"),
+          React.createElement("div", { style: { display: "flex", gap: 10, alignItems: "center" } },
+            React.createElement("input", {
+              type: "number", className: "inp", placeholder: "e.g. 170", step: "0.1", inputMode: "decimal",
+              value: goal || "",
+              onChange: e => {
+                const v = e.target.value ? parseFloat(e.target.value) : null;
+                setGoal(v);
+                persist(entries, v);
+              },
+              style: { flex: 1 }
+            }),
+            React.createElement("span", { style: { color: "var(--text-soft)", fontSize: 14, whiteSpace: "nowrap" } }, "lbs")
+          )
+        ),
+
+        // Recent entries
+        sorted.length > 0 && React.createElement("div", { className: "card" },
+          React.createElement("div", { className: "card-title" }, "Recent Entries"),
+          [...sorted].reverse().slice(0, 10).map((e, i, arr) => {
+            const orig = sorted.findIndex(x => x.date === e.date);
+            const prev = orig > 0 ? sorted[orig - 1] : null;
+            const delta = prev ? parseFloat((e.weight - prev.weight).toFixed(1)) : null;
+            return React.createElement("div", { key: e.date, className: "entry-row" },
+              e.photo
+                ? React.createElement("img", { src: e.photo, className: "entry-thumb", onClick: () => setModal(e), alt: "" })
+                : React.createElement("div", { className: "entry-thumb-empty" }, "📅"),
+              React.createElement("div", { className: "entry-info" },
+                React.createElement("div", { className: "entry-date" }, fmtDate(e.date)),
+                e.note && React.createElement("div", { className: "entry-note" }, e.note)
+              ),
+              React.createElement("div", { className: "entry-weight" },
+                React.createElement("div", { className: "entry-lbs" }, e.weight),
+                delta !== null && React.createElement("div", { className: `entry-delta ${delta < 0 ? "delta-down" : delta > 0 ? "delta-up" : "delta-flat"}` },
+                  delta > 0 ? "+" : "", delta
+                )
+              ),
+              React.createElement("button", { className: "del-btn", onClick: () => handleDelete(e.date) }, "×")
+            );
+          })
+        )
+      ),
+
+      // CHART VIEW
+      view === "chart" && React.createElement("div", null,
+        sorted.length < 2
+          ? React.createElement("div", { className: "empty" },
+              React.createElement("div", { className: "empty-icon" }, "📈"),
+              React.createElement("div", { className: "empty-title" }, "Keep logging"),
+              React.createElement("div", { className: "empty-sub" }, "You need at least 2 entries to see your trend chart.")
+            )
+          : React.createElement("div", null,
+              React.createElement("div", { className: "card" },
+                React.createElement("div", { className: "card-title" }, "Weight Trend"),
+                React.createElement("div", { className: "chart-wrap" },
+                  React.createElement(ResponsiveContainer, { width: "100%", height: "100%" },
+                    React.createElement(LineChart, { data: chartData, margin: { top: 4, right: 4, bottom: 0, left: -20 } },
+                      React.createElement(CartesianGrid, { stroke: "#ede3d4", strokeDasharray: "3 3" }),
+                      React.createElement(XAxis, { dataKey: "date", tickFormatter: fmtDate, tick: { fill: "var(--text-soft)", fontSize: 10, fontFamily: "Nunito" }, axisLine: false, tickLine: false, interval: Math.max(0, Math.floor(chartData.length / 5) - 1) }),
+                      React.createElement(YAxis, { domain: ["auto", "auto"], tick: { fill: "var(--text-soft)", fontSize: 10 }, axisLine: false, tickLine: false }),
+                      React.createElement(Tooltip, { content: React.createElement(CustomTooltip) }),
+                      React.createElement(Line, { type: "monotone", dataKey: "weight", stroke: "var(--sand)", strokeWidth: 1.5, dot: { r: 3, fill: "var(--bean-light)", strokeWidth: 0 }, activeDot: { r: 5 } }),
+                      React.createElement(Line, { type: "monotone", dataKey: "avg", stroke: "var(--sage)", strokeWidth: 2.5, dot: false, strokeLinecap: "round" })
+                    )
+                  )
+                ),
+                React.createElement("div", { style: { display: "flex", gap: 16, marginTop: 12 } },
+                  React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "var(--text-soft)" } },
+                    React.createElement("div", { style: { width: 14, height: 2, background: "var(--sand)", borderRadius: 1 } }),
+                    "Daily"
+                  ),
+                  React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "var(--text-soft)" } },
+                    React.createElement("div", { style: { width: 14, height: 2.5, background: "var(--sage)", borderRadius: 1 } }),
+                    "7-day avg"
+                  )
+                )
+              ),
+              lbsPerWeek && React.createElement("div", { className: "card", style: { textAlign: "center" } },
+                React.createElement("div", { className: "big-lost" }, `−${lbsPerWeek}`),
+                React.createElement("div", { className: "big-lost-label" }, "lbs per week average"),
+                React.createElement("div", { style: { fontSize: 12, color: "var(--text-soft)", marginTop: 8 } }, `Over ${days} days · started at ${first.weight} lbs`)
+              )
+            )
+      ),
+
+      // PHOTOS VIEW
+      view === "photos" && React.createElement("div", null,
+        photoEntries.length === 0
+          ? React.createElement("div", { className: "empty" },
+              React.createElement("div", { className: "empty-icon" }, "📸"),
+              React.createElement("div", { className: "empty-title" }, "No photos yet"),
+              React.createElement("div", { className: "empty-sub" }, "Add a progress photo when logging your weight to see your visual journey here.")
+            )
+          : React.createElement("div", null,
+              photoEntries.length >= 2 && React.createElement("div", { className: "card" },
+                React.createElement("div", { className: "card-title" }, "Before & Now"),
+                React.createElement("div", { className: "compare-grid" },
+                  [photoEntries[0], photoEntries[photoEntries.length - 1]].map((e, i) =>
+                    React.createElement("div", { key: e.date },
+                      React.createElement("span", { className: "compare-badge" }, i === 0 ? "Day 1" : "Latest"),
+                      React.createElement("img", { src: e.photo, className: "compare-img", alt: "", onClick: () => setModal(e) }),
+                      React.createElement("div", { style: { marginTop: 8 } },
+                        React.createElement("div", { style: { fontFamily: "Playfair Display, serif", fontWeight: 700, fontSize: 18 } }, e.weight + " lbs"),
+                        React.createElement("div", { style: { fontSize: 11, color: "var(--text-soft)" } }, fmtDate(e.date))
+                      )
+                    )
+                  )
+                ),
+                totalLost > 0 && React.createElement("div", { style: { textAlign: "center", marginTop: 16, padding: "14px", background: "var(--sage-pale)", borderRadius: "var(--radius-sm)" } },
+                  React.createElement("div", { style: { fontFamily: "Playfair Display, serif", fontSize: 32, fontWeight: 900, color: "var(--sage)" } }, `−${totalLost} lbs`),
+                  React.createElement("div", { style: { fontSize: 11, color: "var(--sage)", fontWeight: 700, marginTop: 2 } }, "total progress 🌿")
+                )
+              ),
+              React.createElement("div", { className: "card" },
+                React.createElement("div", { className: "card-title" }, `${photoEntries.length} Progress Photos`),
+                React.createElement("div", { className: "photo-grid" },
+                  photoEntries.map(e =>
+                    React.createElement("div", { key: e.date, className: "photo-tile", onClick: () => setModal(e) },
+                      React.createElement("img", { src: e.photo, alt: "" }),
+                      React.createElement("div", { className: "photo-tile-label" },
+                        React.createElement("div", { className: "photo-tile-weight" }, e.weight + " lbs"),
+                        React.createElement("div", { className: "photo-tile-date" }, fmtDate(e.date))
+                      )
+                    )
+                  )
+                )
+              )
+            )
+      ),
+
+      // REPORT VIEW
+      view === "report" && React.createElement("div", null,
+        sorted.length < 2
+          ? React.createElement("div", { className: "empty" },
+              React.createElement("div", { className: "empty-icon" }, "📋"),
+              React.createElement("div", { className: "empty-title" }, "Nothing yet"),
+              React.createElement("div", { className: "empty-sub" }, "Log at least 2 entries to generate your report.")
+            )
+          : React.createElement("div", null,
+              React.createElement("div", { className: "card" },
+                React.createElement("div", { className: "card-title" }, "Your Progress Report"),
+                [
+                  { label: "Starting weight", value: `${first.weight} lbs`, sub: fmtDate(first.date) },
+                  { label: "Current weight", value: `${last.weight} lbs`, sub: fmtDate(last.date) },
+                  { label: "Total lost", value: totalLost > 0 ? `−${totalLost} lbs` : `+${Math.abs(totalLost)} lbs`, green: totalLost > 0 },
+                  { label: "Days tracked", value: `${days} days` },
+                  { label: "Entries logged", value: `${sorted.length}` },
+                  lbsPerWeek && { label: "Avg loss / week", value: `${lbsPerWeek} lbs`, green: true },
+                  lbsPerWeek && { label: "30-day pace", value: `−${parseFloat((lbsPerWeek * 4).toFixed(1))} lbs/mo`, green: true },
+                  { label: "Photos logged", value: `${photoEntries.length}` },
+                  goal && { label: "Goal weight", value: `${goal} lbs` },
+                  goalPct !== null && { label: "Goal completion", value: `${goalPct}%`, green: true },
+                ].filter(Boolean).map(row =>
+                  React.createElement("div", { key: row.label, className: "report-row" },
+                    React.createElement("span", { className: "report-row-label" }, row.label),
+                    React.createElement("span", { className: `report-row-value${row.green ? " green" : ""}` }, row.value)
+                  )
+                )
+              ),
+
+              // Best/worst
+              (() => {
+                const deltas = sorted.slice(1).map((e, i) => ({ date: e.date, weight: e.weight, delta: parseFloat((e.weight - sorted[i].weight).toFixed(1)) }));
+                const best = deltas.reduce((m, x) => x.delta < m.delta ? x : m, deltas[0]);
+                const worst = deltas.reduce((m, x) => x.delta > m.delta ? x : m, deltas[0]);
+                return React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 } },
+                  best && React.createElement("div", { className: "card", style: { textAlign: "center", background: "var(--sage-pale)" } },
+                    React.createElement("div", { className: "card-title" }, "Best Day"),
+                    React.createElement("div", { style: { fontFamily: "Playfair Display, serif", fontSize: 28, fontWeight: 700, color: "var(--sage)" } }, `−${Math.abs(best.delta)}`),
+                    React.createElement("div", { style: { fontSize: 11, color: "var(--text-soft)", marginTop: 4 } }, fmtDate(best.date))
+                  ),
+                  worst && worst.delta > 0 && React.createElement("div", { className: "card", style: { textAlign: "center", background: "var(--rose-pale)" } },
+                    React.createElement("div", { className: "card-title" }, "Biggest Bump"),
+                    React.createElement("div", { style: { fontFamily: "Playfair Display, serif", fontSize: 28, fontWeight: 700, color: "var(--rose)" } }, `+${worst.delta}`),
+                    React.createElement("div", { style: { fontSize: 11, color: "var(--text-soft)", marginTop: 4 } }, fmtDate(worst.date))
+                  )
+                );
+              })(),
+
+              // All entries table
+              React.createElement("div", { className: "card" },
+                React.createElement("div", { className: "card-title" }, "Full Log"),
+                sorted.map((e, i) => {
+                  const prev = i > 0 ? sorted[i - 1] : null;
+                  const delta = prev ? parseFloat((e.weight - prev.weight).toFixed(1)) : null;
+                  return React.createElement("div", { key: e.date, style: { display: "flex", gap: 10, padding: "9px 0", borderBottom: i < sorted.length - 1 ? "1px solid var(--warm)" : "none", fontSize: 13, alignItems: "center" } },
+                    React.createElement("div", { style: { width: 22, color: "var(--text-soft)", fontSize: 11, flexShrink: 0, textAlign: "right" } }, i + 1),
+                    React.createElement("div", { style: { flex: 1, color: "var(--text-mid)" } }, fmtDate(e.date)),
+                    React.createElement("div", { style: { fontFamily: "Playfair Display, serif", fontWeight: 700 } }, e.weight),
+                    React.createElement("div", { style: { width: 46, textAlign: "right", fontWeight: 700, fontSize: 12, color: delta === null ? "var(--sand)" : delta < 0 ? "var(--sage)" : delta > 0 ? "var(--rose)" : "var(--text-soft)" } },
+                      delta !== null ? (delta > 0 ? "+" : "") + delta : "—"
+                    ),
+                    e.photo && React.createElement("div", { style: { width: 8, height: 8, borderRadius: "50%", background: "var(--sage)", flexShrink: 0 } })
+                  );
+                })
+              ),
+
+              // Export/Import
+              React.createElement("div", { className: "card" },
+                React.createElement("div", { className: "card-title" }, "Backup & Restore"),
+                React.createElement("div", { className: "export-row" },
+                  React.createElement("button", { className: "btn-ghost", onClick: exportData }, "⬇ Export JSON"),
+                  React.createElement("button", { className: "btn-ghost", onClick: () => importRef.current?.click() }, "⬆ Import JSON")
+                ),
+                React.createElement("input", { ref: importRef, type: "file", accept: ".json", style: { display: "none" }, onChange: importData }),
+                React.createElement("div", { style: { fontSize: 11, color: "var(--text-soft)", marginTop: 10, lineHeight: 1.6 } },
+                  "Export your data regularly as a backup, or to move to a new device."
+                )
+              )
+            )
+      )
+    ),
+
+    // Photo modal
+    modal && React.createElement("div", { className: "modal-overlay", onClick: () => setModal(null) },
+      React.createElement("div", { className: "modal-sheet", onClick: e => e.stopPropagation() },
+        React.createElement("div", { className: "modal-handle" }),
+        React.createElement("img", { src: modal.photo, className: "modal-img", alt: "" }),
+        React.createElement("div", { style: { marginTop: 16, display: "flex", justifyContent: "space-between", alignItems: "flex-start" } },
+          React.createElement("div", null,
+            React.createElement("div", { style: { fontFamily: "Playfair Display, serif", fontSize: 24, fontWeight: 700 } }, modal.weight + " lbs"),
+            React.createElement("div", { style: { fontSize: 13, color: "var(--text-soft)", marginTop: 3 } }, fmtFull(modal.date)),
+            modal.note && React.createElement("div", { style: { fontSize: 13, color: "var(--text-mid)", marginTop: 6, fontStyle: "italic" } }, `"${modal.note}"`)
+          ),
+          React.createElement("button", { className: "btn-ghost", onClick: () => setModal(null) }, "Close")
+        )
+      )
+    ),
+
+    // Toast
+    toast && React.createElement("div", { className: `toast${toast.error ? " error" : toast.success ? " success" : ""}` }, toast.msg)
+  );
+}
+
+ReactDOM.render(React.createElement(App), document.getElementById("root"));
+</script>
+</body>
+</html>
